@@ -47,9 +47,19 @@ void StringBuffer_delete(StringBuffer* this) {
 
 void StringBuffer_makeRoom(StringBuffer* this, size_t neededSize) {
    if (this->bufferSize <= neededSize) {
-      size_t newSize = this->bufferSize * 2;
-      if (newSize < neededSize)
-         newSize += neededSize;
+      size_t maxSize = (size_t)-1;
+      size_t newSize;
+      if (this->bufferSize > maxSize / 2) {
+         newSize = neededSize;
+      } else {
+         newSize = this->bufferSize * 2;
+      }
+      if (newSize < neededSize) {
+         if (maxSize - newSize < neededSize)
+            newSize = neededSize;
+         else
+            newSize += neededSize;
+      }
       this->buffer = realloc(this->buffer, newSize + 1);
       this->bufferSize = newSize;
    }
@@ -109,7 +119,7 @@ void StringBuffer_printf(StringBuffer* this, char* format, ...) {
       va_start(ap, format);
       n = vsnprintf(this->buffer, size, format, ap);
       va_end(ap);
-      if (n > -1 && (size_t)n < size) {
+      if (n >= 0 && (size_t)n < size) {
          this->usedSize = (size_t)n;
          return;
       }
@@ -127,7 +137,7 @@ void StringBuffer_addPrintf(StringBuffer* this, char* format, ...) {
       va_start(ap, format);
       n = vsnprintf(this->buffer + end, size, format, ap);
       va_end(ap);
-      if (n > -1 && (size_t)n < size) {
+      if (n >= 0 && (size_t)n < size) {
          this->usedSize = end + (size_t)n;
          return;
       }

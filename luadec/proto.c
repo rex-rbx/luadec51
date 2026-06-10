@@ -79,7 +79,7 @@ char *DecompileString(const Proto * f, int n)
             if (*s < 32 || *s > 127) {
               size_t room = cap - p;
               int written = snprintf(&(ret[p]), room, "\\%u", *s);
-              if (written > 0 && written < 5) {
+              if (written >= 0 && (size_t)written < room) {
                   p += (size_t)written;
               } else {
                   if (p + 1 < cap) {
