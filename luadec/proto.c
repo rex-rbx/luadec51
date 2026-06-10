@@ -77,11 +77,12 @@ char *DecompileString(const Proto * f, int n)
             break;
         default:
             if (*s < 32 || *s > 127) {
-              int written = snprintf(&(ret[p]), 5, "\\%u", *s);
+              size_t room = cap - p;
+              int written = snprintf(&(ret[p]), room, "\\%u", *s);
               if (written > 0 && written < 5) {
                   p += (size_t)written;
               } else {
-                  if (p + 2 < cap) {
+                  if (p + 1 < cap) {
                       ret[p++] = '?';
                   }
               }
@@ -92,7 +93,11 @@ char *DecompileString(const Proto * f, int n)
         }
     }
     if (p + 2 > cap) {
-        p = cap - 2;
+        if (cap >= 2) {
+            p = cap - 2;
+        } else {
+            p = 0;
+        }
     }
     ret[p++] = '"';
     ret[p] = '\0';
