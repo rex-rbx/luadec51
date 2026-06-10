@@ -4,6 +4,7 @@
 #define HEADER_StringBuffer
 
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -12,8 +13,8 @@
 
 typedef struct StringBuffer_ {
    char* buffer;
-   int bufferSize;
-   int usedSize;
+   size_t bufferSize;
+   size_t usedSize;
 } StringBuffer;
 
 
@@ -21,7 +22,7 @@ StringBuffer* StringBuffer_new(char* data);
 
 void StringBuffer_delete(StringBuffer* this);
 
-void StringBuffer_makeRoom(StringBuffer* this, int neededSize);
+void StringBuffer_makeRoom(StringBuffer* this, size_t neededSize);
 
 void StringBuffer_addChar(StringBuffer* this, char ch);
 

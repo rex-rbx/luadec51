@@ -27,7 +27,7 @@ typedef struct StringBuffer_ {
 StringBuffer* StringBuffer_new(char* data) {
    StringBuffer* this = (StringBuffer*) malloc(sizeof(StringBuffer));
    if (data != NULL) {
-      int len = strlen(data);
+      size_t len = strlen(data);
       this->bufferSize = MAX(STRINGBUFFER_BLOCK, len+1);
       this->buffer = calloc(this->bufferSize, 1);
       this->usedSize = len;
@@ -45,9 +45,9 @@ void StringBuffer_delete(StringBuffer* this) {
    free(this);
 }
 
-void StringBuffer_makeRoom(StringBuffer* this, int neededSize) {
+void StringBuffer_makeRoom(StringBuffer* this, size_t neededSize) {
    if (this->bufferSize <= neededSize) {
-      int newSize = this->bufferSize * 2;
+      size_t newSize = this->bufferSize * 2;
       if (newSize < neededSize)
          newSize += neededSize;
       this->buffer = realloc(this->buffer, newSize + 1);
@@ -63,7 +63,7 @@ void StringBuffer_addChar(StringBuffer* this, char ch) {
 }
 
 void StringBuffer_set(StringBuffer* this, const char* str) {
-   int len = strlen(str);
+   size_t len = strlen(str);
    StringBuffer_makeRoom(this, len+1);
    strncpy(this->buffer, str, len+1);
    this->usedSize = len;
@@ -71,8 +71,8 @@ void StringBuffer_set(StringBuffer* this, const char* str) {
 }
 
 void StringBuffer_add(StringBuffer* this, char* str) {
-   int len = strlen(str);
-   int end = this->usedSize;
+   size_t len = strlen(str);
+   size_t end = this->usedSize;
    StringBuffer_makeRoom(this, this->usedSize + len+1);
    strncpy(this->buffer + end, str, len+1);
    this->usedSize += len;
@@ -80,12 +80,10 @@ void StringBuffer_add(StringBuffer* this, char* str) {
 }
 
 void StringBuffer_prepend(StringBuffer* this, char* str) {
-   int len = strlen(str);
-   int end = this->usedSize;
-   int i;
+   size_t len = strlen(str);
+   size_t end = this->usedSize;
    StringBuffer_makeRoom(this, this->usedSize + len+1);
-   for (i = end; i >= 0; i--)
-      this->buffer[i+len] = this->buffer[i];
+   memmove(this->buffer + len, this->buffer, end + 1);
    strncpy(this->buffer, str, len);
    this->usedSize += len;
 }
@@ -104,14 +102,15 @@ void StringBuffer_addAll(StringBuffer* this, int n, ...) {
 
 void StringBuffer_printf(StringBuffer* this, char* format, ...) {
    va_list ap;
-   int n, size = 100;
+   int n;
+   size_t size = 100;
    while (1) {
       StringBuffer_makeRoom(this, size + 1);
       va_start(ap, format);
       n = vsnprintf(this->buffer, size, format, ap);
       va_end(ap);
-      if (n > -1 && n < size) {
-         this->usedSize = n;
+      if (n > -1 && (size_t)n < size) {
+         this->usedSize = (size_t)n;
          return;
       }
       size *= 2;
@@ -120,15 +119,16 @@ void StringBuffer_printf(StringBuffer* this, char* format, ...) {
 
 void StringBuffer_addPrintf(StringBuffer* this, char* format, ...) {
    va_list ap;
-   int n, size = 100;
-   int end = this->usedSize;
+   int n;
+   size_t size = 100;
+   size_t end = this->usedSize;
    while (1) {
       StringBuffer_makeRoom(this, end + size + 1);
       va_start(ap, format);
       n = vsnprintf(this->buffer + end, size, format, ap);
       va_end(ap);
-      if (n > -1 && n < size) {
-         this->usedSize = end + n;
+      if (n > -1 && (size_t)n < size) {
+         this->usedSize = end + (size_t)n;
          return;
       }
       size *= 2;
@@ -136,7 +136,7 @@ void StringBuffer_addPrintf(StringBuffer* this, char* format, ...) {
 }
 
 char* StringBuffer_getCopy(StringBuffer* this) {
-   char* result = malloc(this->bufferSize+1);
+   char* result = malloc(this->usedSize + 1);
    strncpy(result, this->buffer, this->usedSize);
    result[this->usedSize] = '\0';
    return result;

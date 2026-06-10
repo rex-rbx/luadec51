@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #ifndef LUA_OPNAMES
 #define LUA_OPNAMES
@@ -17,11 +18,19 @@
 // PrintString from luac is not 8-bit clean
 char *DecompileString(const Proto * f, int n)
 {
-    int i;
     const unsigned char *s = svalue(&f->k[n]);
-    int len = (&(&f->k[n])->value.gc->ts)->tsv.len;
-    char *ret = malloc(strlen(s) * 4 + 3);
-    int p = 0;
+    size_t i;
+    size_t len = (&(&f->k[n])->value.gc->ts)->tsv.len;
+    size_t p = 0;
+    char *ret;
+    if (len > (SIZE_MAX - 3) / 4) {
+        ret = malloc(3);
+        if (ret) {
+            strcpy(ret, "\"\"");
+        }
+        return ret;
+    }
+    ret = malloc(len * 4 + 3);
     ret[p++] = '"';
     for (i = 0; i < len; i++, s++) {
         switch (*s) {
@@ -63,11 +72,12 @@ char *DecompileString(const Proto * f, int n)
             break;
         default:
             if (*s < 32 || *s > 127) {
-               char* pos = &(ret[p]);
-               sprintf(pos, "\\%d", *s);
-               p += strlen(pos);
+              int written = sprintf(&(ret[p]), "\\%u", *s);
+              if (written > 0) {
+                  p += (size_t)written;
+              }
             } else {
-               ret[p++] = *s;
+              ret[p++] = *s;
             }
             break;
         }
