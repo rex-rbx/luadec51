@@ -21,6 +21,7 @@ char *DecompileString(const Proto * f, int n)
     const unsigned char *s = svalue(&f->k[n]);
     size_t i;
     size_t len = (&(&f->k[n])->value.gc->ts)->tsv.len;
+    size_t cap;
     size_t p = 0;
     char *ret;
     if (len > (SIZE_MAX - 3) / 4) {
@@ -30,7 +31,11 @@ char *DecompileString(const Proto * f, int n)
         }
         return ret;
     }
-    ret = malloc(len * 4 + 3);
+    cap = len * 4 + 3;
+    ret = malloc(cap);
+    if (ret == NULL) {
+        return NULL;
+    }
     ret[p++] = '"';
     for (i = 0; i < len; i++, s++) {
         switch (*s) {
@@ -76,13 +81,19 @@ char *DecompileString(const Proto * f, int n)
               if (written > 0 && written < 5) {
                   p += (size_t)written;
               } else {
-                  ret[p++] = '?';
+                  if (p + 1 < cap) {
+                      ret[p++] = '?';
+                  }
               }
             } else {
               ret[p++] = *s;
             }
             break;
         }
+    }
+    if (p + 1 >= cap) {
+        ret[cap - 1] = '\0';
+        return ret;
     }
     ret[p++] = '"';
     ret[p] = '\0';
