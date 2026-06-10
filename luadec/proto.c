@@ -92,7 +92,7 @@ char *DecompileString(const Proto * f, int n)
             break;
         }
     }
-    if (p + 2 > cap) {
+    if (p > cap || cap - p < 2) {
         if (cap >= 2) {
             p = cap - 2;
         } else {

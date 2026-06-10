@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #ifdef _WIN32
 #define vsnprintf _vsnprintf
@@ -55,7 +56,7 @@ void StringBuffer_makeRoom(StringBuffer* this, size_t neededSize) {
          newSize = this->bufferSize * 2;
       }
       if (newSize < neededSize) {
-         if (maxSize - newSize < neededSize)
+         if (neededSize > maxSize - newSize)
             newSize = neededSize;
          else
             newSize += neededSize;
@@ -119,7 +120,7 @@ void StringBuffer_printf(StringBuffer* this, char* format, ...) {
       va_start(ap, format);
       n = vsnprintf(this->buffer, size, format, ap);
       va_end(ap);
-      if (n >= 0 && (size_t)n < size) {
+      if (n >= 0 && (size > (size_t)INT_MAX || n < (int)size)) {
          this->usedSize = (size_t)n;
          return;
       }
@@ -137,7 +138,7 @@ void StringBuffer_addPrintf(StringBuffer* this, char* format, ...) {
       va_start(ap, format);
       n = vsnprintf(this->buffer + end, size, format, ap);
       va_end(ap);
-      if (n >= 0 && (size_t)n < size) {
+      if (n >= 0 && (size > (size_t)INT_MAX || n < (int)size)) {
          this->usedSize = end + (size_t)n;
          return;
       }
