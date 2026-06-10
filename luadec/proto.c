@@ -72,9 +72,11 @@ char *DecompileString(const Proto * f, int n)
             break;
         default:
             if (*s < 32 || *s > 127) {
-              int written = sprintf(&(ret[p]), "\\%u", *s);
-              if (written > 0) {
+              int written = snprintf(&(ret[p]), 5, "\\%u", *s);
+              if (written > 0 && written < 5) {
                   p += (size_t)written;
+              } else {
+                  ret[p++] = '?';
               }
             } else {
               ret[p++] = *s;

@@ -137,6 +137,8 @@ void StringBuffer_addPrintf(StringBuffer* this, char* format, ...) {
 
 char* StringBuffer_getCopy(StringBuffer* this) {
    char* result = malloc(this->usedSize + 1);
+   if (result == NULL)
+      return NULL;
    strncpy(result, this->buffer, this->usedSize);
    result[this->usedSize] = '\0';
    return result;
