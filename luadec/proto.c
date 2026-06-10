@@ -81,7 +81,7 @@ char *DecompileString(const Proto * f, int n)
               if (written > 0 && written < 5) {
                   p += (size_t)written;
               } else {
-                  if (p + 1 < cap) {
+                  if (p + 2 < cap) {
                       ret[p++] = '?';
                   }
               }
@@ -91,9 +91,8 @@ char *DecompileString(const Proto * f, int n)
             break;
         }
     }
-    if (p + 1 >= cap) {
-        ret[cap - 1] = '\0';
-        return ret;
+    if (p + 2 > cap) {
+        p = cap - 2;
     }
     ret[p++] = '"';
     ret[p] = '\0';
