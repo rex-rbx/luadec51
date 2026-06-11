@@ -327,8 +327,12 @@ printf("\n");
             TieAsNext(curr, exp);
             curr = curr->parent;
             if (!curr->is_chain) {
-               SET_ERROR(F,"unhandled construct in 'if'");
-               return NULL;
+               /* fallback: keep expression sequence linear instead of aborting */
+               TieAsNext(curr, exp);
+               curr = exp;
+               if (endif)
+                  *endif = dest;
+               continue;
             };
             prevParent = curr->parent;
             chain = MakeExpChain(dest);
@@ -353,8 +357,12 @@ printf("\n");
          TieAsNext(curr, subexp);
          curr = exp;
       } else {
-         SET_ERROR(F,"unhandled construct in 'if'");
-         return NULL;
+         /* fallback for complex layouts: preserve condition text and continue */
+         TieAsNext(curr, exp);
+         curr = exp;
+         if (endif)
+            *endif = dest;
+         continue;
       }
 
       if (curr->parent && at+3 > curr->parent->dest) {
@@ -2202,6 +2210,9 @@ char* ProcessCode(const Proto * f, int indent)
       case OP_SETLIST:
          {
             TRY(SetList(F, a, b, c));
+            if (c == 0) {
+               ignoreNext = 1;
+            }
             break;
          }
       case OP_CLOSE:
