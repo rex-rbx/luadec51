@@ -310,7 +310,7 @@ int luaU_guess_locals(Proto * f, int main) {
         } else {
           loadregto = a+b;
         }
-        if (c==0 && pc+1 < f->sizecode) {
+        if (c == 0 && pc + 1 < f->sizecode) {
           pc++;
         }
         break;

@@ -201,6 +201,13 @@ void TieAsSubExp(LogicExp* parent, LogicExp* item) {
    }
 }
 
+static void AppendFallbackExp(LogicExp** curr, LogicExp* exp, int dest, int* endif) {
+   TieAsNext(*curr, exp);
+   *curr = exp;
+   if (endif)
+      *endif = dest;
+}
+
 LogicExp* MakeBoolean(Function * F, int* endif, int* thenaddr)
 {
    int i;
@@ -327,11 +334,8 @@ printf("\n");
             TieAsNext(curr, exp);
             curr = curr->parent;
             if (!curr->is_chain) {
-               /* fallback: keep expression sequence linear instead of aborting */
-               TieAsNext(curr, exp);
-               curr = exp;
-               if (endif)
-                  *endif = dest;
+               /* fallback for complex nesting: keep a linear expression chain */
+               AppendFallbackExp(&curr, exp, dest, endif);
                continue;
             };
             prevParent = curr->parent;
@@ -357,11 +361,8 @@ printf("\n");
          TieAsNext(curr, subexp);
          curr = exp;
       } else {
-         /* fallback for complex layouts: preserve condition text and continue */
-         TieAsNext(curr, exp);
-         curr = exp;
-         if (endif)
-            *endif = dest;
+         /* fallback for unsupported layouts: preserve condition text and continue */
+         AppendFallbackExp(&curr, exp, dest, endif);
          continue;
       }
 
@@ -2211,6 +2212,7 @@ char* ProcessCode(const Proto * f, int indent)
          {
             TRY(SetList(F, a, b, c));
             if (c == 0) {
+               /* Lua 5.1 SETLIST with C=0 consumes the next instruction as data */
                ignoreNext = 1;
             }
             break;
